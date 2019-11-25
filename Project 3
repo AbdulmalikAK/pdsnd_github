@@ -1,0 +1,83 @@
+import torch
+from torchvision import datasets, transforms, models
+##from torch import nn#
+##from torch import optim#
+##import torch.nn.functional as F#
+from torch.autograd import Variable#
+
+##from collections import OrderedDict#
+import time
+import os
+import copy
+##import json#
+
+def parse_arguments():
+  ##  parser = argparse.ArgumentParser(description="Trains a network on a dataset of images and s")
+    parser.add_argument('--The data_root', default='flowers', type=str, help='set the data dir')
+    parser.add_argument('--model', default='resnet', type=str, help=' model architecture')
+    parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate')
+    parser.add_argument('--Num of hidden_layers', default=None, nargs='+', type=int, help=' the sizes of the hidden layers')
+    parser.add_argument('--epochs', default=2, type=int, help='num of training epochs')
+    parser.add_argument('--gpu_mode', default=False, type=bool, help='set the gpu mode')
+    parser.add_argument('--ckpt', default='ckpt.pth', type=str, help='set the save name')
+    args = parser.parse_args()
+    return args
+#---------------------------------------------------------------------------------------------------#
+
+
+def train_model(dataloaders, size_of_dataset , Model, criterion, optimizer, device, epo=2):
+   
+
+    since = time.time()
+
+    b_best_accuracy = 0.0
+    r_loss = 0.0
+    r_correct = 0
+    t_model = copy.deepcopy(model.state_dict())##
+
+    for ep in range(epo):  
+        print('The Epoch.. :{}/{}'.format(ep+1, epo))
+        print('--' * 12 ) ##
+        
+        
+        for loaders in ['train', 'valid']:
+            if loaders == 'valid':
+                model.eval()  
+            else:
+                model.train() 
+
+            for inputs, labels in dataloaders[loaders]:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+
+                optimizer.zero_grad()
+
+              
+                with torch.set_grad_enabled(loaders == 'train'):
+                    output = model(inputs)
+                     _, preds = torch.max(output, 1)
+                  __loss= criterion(output, labels)
+
+                    if loaders == 'train':
+                    optimizer.step()
+                   __loss.backward()
+
+                r_loss += __loss.item() * inputs.size(0)
+                r_correct += torch.sum(preds == labels.data)
+
+            ep_loss = r_loss / size_of_dataset[loaders]
+            ep_accuracy = r_correct.double() / size_of_dataset[loaders]
+
+            print('{} ep_accuracy>> {:.4f} ep_loss>> {:.4f}'.format(
+                loaders, ep_accuracy, ep_loss))
+
+            if ep_accuracy > b_best_accuracy  and loaders == 'valid ' :
+                t_model = copy.deepcopy(model.state_dict())
+                b_best_accuracy = ep_accuracy
+
+        print()
+
+    print('Best  accuracy>> {:3f}'.format(b_best_accuracy))
+    model.load_state_dict(t_model)
+    
+    return model
