@@ -1,4 +1,4 @@
-This document include 3 projects from data science nanodegree.
+This document include 3 projects .
 
 ### ----------PROJECT 1 -------------
  
